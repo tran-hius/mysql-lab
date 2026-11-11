@@ -86,6 +86,17 @@ export async function submitExam(items, signal) {
   })
 }
 
+export async function getSchema(signal) {
+  return request('/api/schema', signal)
+}
+
+export async function runSandbox(sql, signal) {
+  return request('/api/sandbox', signal, {
+    method: 'POST',
+    body: { sql },
+  })
+}
+
 export async function getHealth(signal) {
   const response = await fetch(`${baseUrl}/api/health`, {
     signal,

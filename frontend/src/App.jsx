@@ -4,6 +4,7 @@ import Course from './components/Course.jsx'
 import ModeTabs from './components/ModeTabs.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import ResultTable from './components/ResultTable.jsx'
+import Sandbox from './components/Sandbox.jsx'
 import SqlPanel from './components/SqlPanel.jsx'
 import StatusBar from './components/StatusBar.jsx'
 import { useSound } from './hooks/useSound.js'
@@ -185,18 +186,7 @@ export default function App() {
 
       {mode === 'course' && <Course play={play} />}
 
-      {mode === 'sandbox' && (
-        <main className="content">
-          <section className="empty-state">
-            <p className="eyebrow">Sandbox</p>
-            <h1>Khu vực chạy SQL chỉ đọc</h1>
-            <p>
-              Sandbox trên database <code>shop</code> sẽ có ở bước tiếp theo: editor, schema explorer
-              và bảng kết quả.
-            </p>
-          </section>
-        </main>
-      )}
+      {mode === 'sandbox' && <Sandbox play={play} />}
     </div>
   )
 }
