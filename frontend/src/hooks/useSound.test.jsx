@@ -54,4 +54,15 @@ describe('useSound', () => {
     const { result } = renderHook(() => useSound())
     expect(result.current.enabled).toBe(false)
   })
+
+  it('không ném lỗi khi trình duyệt chặn AudioContext', () => {
+    window.AudioContext = class {
+      constructor() {
+        throw new Error('AudioContext bị chặn')
+      }
+    }
+
+    const { result } = renderHook(() => useSound())
+    expect(() => act(() => result.current.play('select'))).not.toThrow()
+  })
 })

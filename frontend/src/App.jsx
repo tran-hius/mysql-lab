@@ -65,12 +65,14 @@ export default function App() {
       runQuery(id, controller.signal)
         .then((data) => {
           if (controller.signal.aborted) return
+          clearTimeout(runSoundRef.current)
           setResult(data)
           setStatus('ready')
           play('success')
         })
         .catch((queryFailure) => {
           if (queryFailure.name === 'AbortError' || controller.signal.aborted) return
+          clearTimeout(runSoundRef.current)
           setError({ message: queryFailure.message, hint: queryFailure.hint })
           setStatus('error')
           play('error')

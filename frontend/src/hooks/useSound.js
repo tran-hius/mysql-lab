@@ -36,9 +36,21 @@ export function useSound() {
     if (!contextRef.current) {
       const AudioCtor = window.AudioContext ?? window.webkitAudioContext
       if (!AudioCtor) return null
-      contextRef.current = new AudioCtor()
+
+      try {
+        contextRef.current = new AudioCtor()
+      } catch {
+        return null
+      }
     }
-    contextRef.current.resume?.()
+
+    try {
+      const resumed = contextRef.current.resume?.()
+      if (resumed && typeof resumed.catch === 'function') resumed.catch(() => {})
+    } catch {
+      // Trình duyệt chặn audio trước thao tác đầu tiên: bỏ qua, lần sau thử lại.
+    }
+
     return contextRef.current
   }
 
@@ -49,20 +61,24 @@ export function useSound() {
       const context = ensureContext()
       if (!pattern || !context) return
 
-      for (const note of pattern) {
-        const start = context.currentTime + (note.delay ?? 0)
-        const oscillator = context.createOscillator()
-        const gain = context.createGain()
+      try {
+        for (const note of pattern) {
+          const start = context.currentTime + (note.delay ?? 0)
+          const oscillator = context.createOscillator()
+          const gain = context.createGain()
 
-        oscillator.type = note.type
-        oscillator.frequency.setValueAtTime(note.freq, start)
-        gain.gain.setValueAtTime(0.04, start)
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + note.duration)
+          oscillator.type = note.type
+          oscillator.frequency.setValueAtTime(note.freq, start)
+          gain.gain.setValueAtTime(0.04, start)
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + note.duration)
 
-        oscillator.connect(gain)
-        gain.connect(context.destination)
-        oscillator.start(start)
-        oscillator.stop(start + note.duration)
+          oscillator.connect(gain)
+          gain.connect(context.destination)
+          oscillator.start(start)
+          oscillator.stop(start + note.duration)
+        }
+      } catch {
+        // Âm thanh là phụ trợ: lỗi Web Audio không được làm hỏng thao tác chính.
       }
     },
     [enabled],

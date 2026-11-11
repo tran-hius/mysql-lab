@@ -115,7 +115,7 @@ Response của `/api/queries/:id`:
   "id": "monthly-revenue",
   "title": "Doanh thu theo tháng",
   "sql": "SELECT ...",
-  "columns": [{ "name": "thang", "type": "VAR_STRING" }],
+  "columns": [{ "name": "thang", "type": 253 }],
   "rows": [{ "thang": "2025-01", "so_don": 64 }],
   "rowCount": 8,
   "totalRows": 8,
@@ -262,7 +262,7 @@ frontend/src/
 - `GET /api/queries` trả đủ 10 mục, không lộ SQL.
 - Chạy từng endpoint và đối chiếu số liệu với `mysql` CLI (ví dụ doanh thu tháng 2025-01 =
   1.859.208,90; `customer-referee` trả id 1, 2, 4, 5).
-- `overview` báo 24 khách; `top-customers` trả 24 dòng, nhãn dạng `Tên (#id)`.
+- `overview` báo 24 khách; `top-customers` trả 10 dòng, nhãn dạng `Tên (#id)`.
 - Tắt MySQL → UI hiện lỗi rõ ràng, không hiện bảng cũ; bật lại → chạy được.
 - `npm run build` và `npm run lint` sạch ở frontend.
 - Thử bàn phím: Tab chọn được mục, Enter chạy; nút âm thanh có `aria-pressed`.

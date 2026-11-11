@@ -1,10 +1,9 @@
 import { Router } from 'express'
 import { listQueries } from '../queries/index.js'
 import { runQuery } from '../services/queryRunner.js'
+import { isDatabaseUnavailable } from '../services/dbError.js'
 
 const router = Router()
-
-const DB_ERRORS = new Set(['ECONNREFUSED', 'ER_ACCESS_DENIED_ERROR', 'ER_BAD_DB_ERROR'])
 
 router.get('/', (req, res) => {
   res.json({ ok: true, queries: listQueries() })
@@ -24,7 +23,7 @@ router.get('/:id', async (req, res, next) => {
 
     res.json({ ok: true, ...result })
   } catch (error) {
-    if (DB_ERRORS.has(error.code)) {
+    if (isDatabaseUnavailable(error)) {
       return res.status(503).json({
         ok: false,
         error: 'DB_UNAVAILABLE',

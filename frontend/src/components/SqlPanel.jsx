@@ -11,9 +11,14 @@ export default function SqlPanel({ sql }) {
     [],
   )
 
-  const copy = async () => {
+  const copy = async (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!navigator.clipboard?.writeText) return
+
     try {
-      await navigator.clipboard?.writeText(sql)
+      await navigator.clipboard.writeText(sql)
       setCopied(true)
       clearTimeout(timerRef.current)
       timerRef.current = setTimeout(() => setCopied(false), 1500)
@@ -27,7 +32,7 @@ export default function SqlPanel({ sql }) {
       <summary>
         <span>Câu SQL đã dùng</span>
         <button type="button" className="copy-button" onClick={copy}>
-          {copied ? 'Đã copy' : 'Copy'}
+          <span aria-live="polite">{copied ? 'Đã copy' : 'Copy'}</span>
         </button>
       </summary>
       <pre>
