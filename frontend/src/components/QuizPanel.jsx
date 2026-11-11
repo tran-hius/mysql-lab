@@ -84,6 +84,13 @@ export default function QuizPanel({ exercise, progressEntry, onGraded, play }) {
         error={error}
         explanation={result?.explanation}
       />
+
+      {result && Number.isInteger(result.answer) && (
+        <p className="quiz-answer">
+          Đáp án đúng: <strong>{String.fromCharCode(65 + result.answer)}</strong>.{' '}
+          {exercise.options[result.answer]}
+        </p>
+      )}
     </article>
   )
 }

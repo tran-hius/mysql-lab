@@ -71,6 +71,34 @@ test('thiếu dòng trả về missing, thừa dòng trả về extra', () => {
   assert.equal(comparison.actualRowCount, 1)
 })
 
+test('sai thứ tự cột báo COLUMN_COUNT', () => {
+  const expected = result(COLUMNS, [{ ten: 'An', tien: '10.00' }])
+  const actual = result(
+    [
+      { name: 'tien', type: 246 },
+      { name: 'ten', type: 253 },
+    ],
+    [{ tien: '10.00', ten: 'An' }],
+  )
+
+  const comparison = compareResults(expected, actual)
+  assert.equal(comparison.correct, false)
+  assert.equal(comparison.reason, 'COLUMN_COUNT')
+})
+
+test('missingCount/extraCount đếm đủ dòng, samples tối đa 3', () => {
+  const expectedRows = Array.from({ length: 9 }, (_, index) => ({
+    ten: `KH${index}`,
+    tien: String(index),
+  }))
+  const expected = result(COLUMNS, expectedRows)
+  const actual = result(COLUMNS, [])
+
+  const comparison = compareResults(expected, actual)
+  assert.equal(comparison.missingCount, 9)
+  assert.equal(comparison.missing.length, 3)
+})
+
 test('sai số cột báo COLUMN_COUNT', () => {
   const expected = result(COLUMNS, [{ ten: 'An', tien: '10.00' }])
   const actual = result([{ name: 'ten', type: 253 }], [{ ten: 'An' }])

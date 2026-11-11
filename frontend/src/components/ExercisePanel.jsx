@@ -4,7 +4,7 @@ import FeedbackBox from './FeedbackBox.jsx'
 import ResultTable from './ResultTable.jsx'
 import SqlEditor from './SqlEditor.jsx'
 
-export default function ExercisePanel({ exercise, progressEntry, onGraded, play }) {
+export default function ExercisePanel({ exercise, progressEntry, onGraded, onViewedSolution, play }) {
   const [sql, setSql] = useState(progressEntry?.lastSql ?? '')
   const [status, setStatus] = useState('idle')
   const [result, setResult] = useState(null)
@@ -46,6 +46,7 @@ export default function ExercisePanel({ exercise, progressEntry, onGraded, play 
     try {
       setConfirmReveal(false)
       setSolution(await getExerciseSolution(exercise.id))
+      onViewedSolution?.(exercise)
     } catch (failure) {
       setError(failure)
       setStatus('error')

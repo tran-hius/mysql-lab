@@ -44,11 +44,37 @@ function makeResult(expected, actual, reason, { missing = [], extra = [] } = {})
     reason,
     expectedRowCount: expected.rows.length,
     actualRowCount: actual.rows.length,
-    missing,
-    extra,
+    missing: pickSamples(missing),
+    extra: pickSamples(extra),
     missingCount: missing.length,
     extraCount: extra.length,
   };
+}
+
+function sameRowIgnoringOrder(a, b) {
+  if (a.length !== b.length) return false;
+
+  const used = new Array(b.length).fill(false);
+  return a.every((value) => {
+    const index = b.findIndex((candidate, position) => !used[position] && sameValue(value, candidate));
+    if (index === -1) return false;
+    used[index] = true;
+    return true;
+  });
+}
+
+function rowsMatchIgnoringColumnOrder(expectedRows, actualRows) {
+  if (expectedRows.length !== actualRows.length) return false;
+
+  const used = new Array(actualRows.length).fill(false);
+  return expectedRows.every((expectedRow) => {
+    const index = actualRows.findIndex(
+      (actualRow, position) => !used[position] && sameRowIgnoringOrder(expectedRow, actualRow),
+    );
+    if (index === -1) return false;
+    used[index] = true;
+    return true;
+  });
 }
 
 /**
@@ -82,8 +108,8 @@ export function compareResults(expected, actual, { orderMatters = false } = {}) 
 
     if (expectedRows.length !== actualRows.length) {
       return makeResult(expected, actual, 'ROW_COUNT', {
-        missing: pickSamples(expectedRows.slice(limit)),
-        extra: pickSamples(actualRows.slice(limit)),
+        missing: expectedRows.slice(limit),
+        extra: actualRows.slice(limit),
       });
     }
 
@@ -111,8 +137,9 @@ export function compareResults(expected, actual, { orderMatters = false } = {}) 
     return makeResult(expected, actual, null);
   }
 
-  return makeResult(expected, actual, 'ROW_COUNT', {
-    missing: pickSamples(missing),
-    extra: pickSamples(extra),
-  });
+  if (rowsMatchIgnoringColumnOrder(expectedRows, actualRows)) {
+    return makeResult(expected, actual, 'COLUMN_COUNT');
+  }
+
+  return makeResult(expected, actual, 'ROW_COUNT', { missing, extra });
 }

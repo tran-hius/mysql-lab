@@ -4,6 +4,7 @@ import {
   loadProgress,
   saveProgress,
   recordExercise,
+  recordSolutionView,
   recordExam,
   isLessonPassed,
   summarize,
@@ -100,6 +101,22 @@ describe('recordExercise và XP', () => {
 
     expect(progress.exercises['m1-l1-ex1'].correct).toBe(true)
     expect(progress.exercises['m1-l1-ex1'].lastCorrect).toBe(false)
+  })
+
+  it('xem đáp án ghi cờ viewedSolution mà không tăng attempts', () => {
+    let progress = recordExercise(emptyProgress(), {
+      lessonId: 'm1-l1',
+      exerciseId: 'm1-l1-ex1',
+      correct: false,
+    })
+    progress = recordSolutionView(progress, {
+      lessonId: 'm1-l1',
+      exerciseId: 'm1-l1-ex1',
+    })
+
+    expect(progress.exercises['m1-l1-ex1'].viewedSolution).toBe(true)
+    expect(progress.exercises['m1-l1-ex1'].attempts).toBe(1)
+    expect(progress.activityDays).toHaveLength(0)
   })
 })
 

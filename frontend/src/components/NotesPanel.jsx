@@ -17,6 +17,7 @@ function downloadText(filename, text) {
 export default function NotesPanel({ lessonId, course }) {
   const [text, setText] = useState(() => loadNote(lessonId))
   const [status, setStatus] = useState('')
+  const [collapsed, setCollapsed] = useState(false)
   const latestRef = useRef({ lessonId, text })
 
   useEffect(() => {
@@ -54,28 +55,42 @@ export default function NotesPanel({ lessonId, course }) {
         <label className="field-label" htmlFor={`note-${lessonId}`}>
           Ghi chú của bạn
         </label>
-        <span className="notes-status" aria-live="polite">
-          {status}
+        <span className="notes-head-actions">
+          <span className="notes-status" aria-live="polite">
+            {status}
+          </span>
+          <button
+            type="button"
+            className="ghost-button notes-toggle"
+            aria-expanded={!collapsed}
+            onClick={() => setCollapsed((value) => !value)}
+          >
+            {collapsed ? 'Mở ghi chú' : 'Thu gọn'}
+          </button>
         </span>
       </div>
 
-      <textarea
-        id={`note-${lessonId}`}
-        className="notes-textarea"
-        value={text}
-        placeholder="Ghi lại bẫy, lỗi đã gặp và cách sửa…"
-        onChange={(event) => {
-          setText(event.target.value)
-          setStatus('')
-        }}
-      />
+      {!collapsed && (
+        <>
+          <textarea
+            id={`note-${lessonId}`}
+            className="notes-textarea"
+            value={text}
+            placeholder="Ghi lại bẫy, lỗi đã gặp và cách sửa…"
+            onChange={(event) => {
+              setText(event.target.value)
+              setStatus('')
+            }}
+          />
 
-      <div className="notes-foot">
-        <span className="notes-count">{text.length} ký tự</span>
-        <button type="button" className="ghost-button" onClick={handleExport}>
-          Xuất tất cả ghi chú .md
-        </button>
-      </div>
+          <div className="notes-foot">
+            <span className="notes-count">{text.length} ký tự</span>
+            <button type="button" className="ghost-button" onClick={handleExport}>
+              Xuất tất cả ghi chú .md
+            </button>
+          </div>
+        </>
+      )}
     </aside>
   )
 }

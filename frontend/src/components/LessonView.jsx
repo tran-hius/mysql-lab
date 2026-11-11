@@ -17,6 +17,7 @@ export default function LessonView({
   progress,
   course,
   onGraded,
+  onViewedSolution,
   onNext,
   hasNext,
   play,
@@ -77,6 +78,7 @@ export default function LessonView({
                 exercise={exercise}
                 progressEntry={progress.exercises[exercise.id]}
                 onGraded={onGraded}
+                onViewedSolution={onViewedSolution}
                 play={play}
               />
             ),

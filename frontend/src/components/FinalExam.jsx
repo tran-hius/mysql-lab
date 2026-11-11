@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getExam, submitExam } from '../api/client.js'
+import { REASONS } from '../lib/feedback.js'
 import SqlEditor from './SqlEditor.jsx'
 
 function isAnswered(item, answer) {
@@ -181,6 +182,21 @@ export default function FinalExam({ play, onSubmitted }) {
                     </label>
                   ))}
                 </fieldset>
+              )}
+
+              {itemResult && (
+                <div className={`feedback ${itemResult.correct ? 'is-correct' : 'is-wrong'}`}>
+                  <p className="feedback-title">{itemResult.correct ? 'Đúng' : 'Sai'}</p>
+                  {!itemResult.correct && itemResult.feedback?.reason && (
+                    <p>{REASONS[itemResult.feedback.reason] ?? 'Kết quả chưa khớp đáp án.'}</p>
+                  )}
+                  {!itemResult.correct && itemResult.feedback?.message && (
+                    <p className="feedback-detail">{itemResult.feedback.message}</p>
+                  )}
+                  {itemResult.explanation && (
+                    <p className="feedback-detail">{itemResult.explanation}</p>
+                  )}
+                </div>
               )}
             </li>
           )

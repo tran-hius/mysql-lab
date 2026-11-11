@@ -142,6 +142,7 @@ router.post('/exercises/:id/answer', (req, res) => {
   res.json({
     ok: true,
     correct: choice === found.exercise.answer,
+    answer: found.exercise.answer,
     explanation: found.exercise.explanation,
   });
 });
@@ -239,14 +240,27 @@ router.post('/exam/submit', async (req, res) => {
     try {
       assertPracticeSql(entry.sql);
     } catch (error) {
-      return res.status(400).json({ ok: false, error: 'SQL_NOT_ALLOWED', message: error.message });
+      results.push({
+        id: item.id,
+        correct: false,
+        feedback: { reason: 'SQL_ERROR', message: error.message },
+      });
+      continue;
     }
 
     let user;
     try {
       user = await runPracticeSql(entry.sql);
     } catch (error) {
-      return sendSqlError(res, error);
+      results.push({
+        id: item.id,
+        correct: false,
+        feedback: {
+          reason: error.code === 'QUERY_TIMEOUT' ? 'QUERY_TIMEOUT' : 'SQL_ERROR',
+          message: error.message,
+        },
+      });
+      continue;
     }
 
     try {
@@ -261,7 +275,11 @@ router.post('/exam/submit', async (req, res) => {
         feedback: buildFeedback(comparison, expected),
       });
     } catch (error) {
-      return sendSqlError(res, error);
+      results.push({
+        id: item.id,
+        correct: false,
+        feedback: { reason: 'SQL_ERROR', message: error.message },
+      });
     }
   }
 

@@ -119,6 +119,7 @@ test('POST answer chấm quiz và từ chối choice không hợp lệ', async (
   const correctBody = await correct.json()
   assert.equal(correct.status, 200)
   assert.equal(correctBody.correct, true)
+  assert.equal(correctBody.answer, 1)
   assert.ok(correctBody.explanation)
 
   const wrong = await post('/api/course/exercises/m1-quiz/answer', { choice: 0 })
@@ -191,6 +192,23 @@ test('POST exam submit sai quiz không đạt 80', async () => {
   assert.equal(body.score, 67)
   assert.equal(body.passed, false)
   assert.equal(body.items.filter((item) => item.correct).length, 8)
+})
+
+test('POST exam submit SQL lỗi chỉ tính sai câu đó', async () => {
+  const items = examItems.map((item) =>
+    item.type === 'sql'
+      ? { id: item.id, sql: item.solution }
+      : { id: item.id, choice: item.answer },
+  )
+  items[0] = { id: examItems[0].id, sql: 'SELECT * FROM khong_ton_tai' }
+
+  const response = await post('/api/course/exam/submit', { items })
+  const body = await response.json()
+
+  assert.equal(response.status, 200)
+  assert.equal(body.items[0].correct, false)
+  assert.equal(body.items[0].feedback.reason, 'SQL_ERROR')
+  assert.equal(body.correctCount, 11)
 })
 
 test('POST exam submit thiếu câu trả 422', async () => {

@@ -34,7 +34,7 @@ Cần MySQL đang chạy. Tạo database luyện tập `shop` (script tự `DROP
 Get-Content database\shop.sql -Raw | mysql -u root -p
 
 # User đọc: thay __PASSWORD__ bằng DB_READER_PASSWORD trong backend/.env
-(Get-Content database\reader-user.sql -Raw) -replace '__PASSWORD__', 'Read@HocMySQL2026' | mysql -u root -p
+(Get-Content database\reader-user.sql -Raw) -replace '__PASSWORD__', '<DB_READER_PASSWORD>' | mysql -u root -p
 ```
 
 Database `hocmysql` của dashboard là dữ liệu sẵn có trước đó (bảng `sales`). Khóa học không đụng tới database này.

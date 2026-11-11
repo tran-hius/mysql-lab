@@ -24,6 +24,14 @@ test('guard chặn câu lệnh ghi và nhiều câu', () => {
   }
 })
 
+test('guard cho phép REPLACE() và dấu ; trong chuỗi', () => {
+  assert.doesNotThrow(() =>
+    assertPracticeSql("SELECT REPLACE(name, 'a', 'b') FROM customers"),
+  )
+  assert.doesNotThrow(() => assertPracticeSql("SELECT 'a;b' AS value"))
+  assert.doesNotThrow(() => assertPracticeSql('SELECT "x;y" AS value'))
+})
+
 test('guard không cho EXPLAIN nếu không bật allowExplain', () => {
   assert.throws(() => assertPracticeSql('EXPLAIN SELECT * FROM orders'), { code: 'SQL_NOT_ALLOWED' })
 })

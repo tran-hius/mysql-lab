@@ -1236,3 +1236,27 @@
     overflow: visible;
   }
 }
+
+.notes-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-toggle {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.quiz-answer {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quiz-answer strong {
+  color: var(--accent);
+}

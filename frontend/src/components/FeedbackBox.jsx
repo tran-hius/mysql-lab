@@ -1,8 +1,4 @@
-const REASONS = {
-  COLUMN_COUNT: 'Số cột hoặc thứ tự cột chưa khớp với yêu cầu.',
-  ORDER: 'Đúng các dòng nhưng thứ tự sắp xếp chưa đúng.',
-  ROW_COUNT: 'Số dòng chưa khớp với đáp án.',
-}
+import { REASONS } from '../lib/feedback.js'
 
 export default function FeedbackBox({ status, result, error, explanation }) {
   if (status === 'correct') {

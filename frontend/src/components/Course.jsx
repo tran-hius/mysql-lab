@@ -4,6 +4,7 @@ import {
   loadProgress,
   recordExam,
   recordExercise,
+  recordSolutionView,
   saveProgress,
 } from '../lib/courseProgress.js'
 import Certificate from './Certificate.jsx'
@@ -96,6 +97,23 @@ export default function Course({ play }) {
           sql: submission.sql,
           choice: submission.choice,
           hintsUsed: submission.hintsUsed,
+        })
+        saveProgress(next)
+        return next
+      })
+    },
+    [lessonData],
+  )
+
+  const handleViewedSolution = useCallback(
+    (exercise) => {
+      const lessonId = lessonData?.lesson?.id
+      if (!lessonId) return
+
+      setProgress((current) => {
+        const next = recordSolutionView(current, {
+          lessonId,
+          exerciseId: exercise.id,
         })
         saveProgress(next)
         return next
@@ -215,6 +233,7 @@ export default function Course({ play }) {
                 progress={progress}
                 course={modules}
                 onGraded={handleGraded}
+                onViewedSolution={handleViewedSolution}
                 onNext={nextLesson ? () => openLesson(nextLesson.id) : null}
                 hasNext={Boolean(nextLesson)}
                 play={play}

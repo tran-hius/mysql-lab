@@ -60,7 +60,7 @@ function addDay(days, key) {
 
 export function recordExercise(
   progress,
-  { lessonId, exerciseId, correct, sql, choice, hintsUsed = 0, at = new Date() },
+  { lessonId, exerciseId, correct, sql, choice, hintsUsed = 0, viewedSolution = false, at = new Date() },
 ) {
   const base = normalize(progress)
   const previous = base.exercises[exerciseId] ?? {}
@@ -71,7 +71,7 @@ export function recordExercise(
     {
       at: timestamp,
       correct: correctNow,
-      sql: sql ? String(sql).slice(0, 300) : null,
+      sql: sql ? String(sql).slice(0, 2000) : null,
     },
   ].slice(-MAX_HISTORY)
 
@@ -86,13 +86,37 @@ export function recordExercise(
     lastSql: sql ? String(sql).slice(0, 500) : (previous.lastSql ?? null),
     lastChoice: Number.isInteger(choice) ? choice : (previous.lastChoice ?? null),
     hintsUsed: Math.max(previous.hintsUsed ?? 0, hintsUsed),
+    viewedSolution: Boolean(previous.viewedSolution) || Boolean(viewedSolution),
     history,
   }
 
   return {
     ...base,
     exercises: { ...base.exercises, [exerciseId]: entry },
-    activityDays: addDay(base.activityDays, dayKey(at)),
+    activityDays: correctNow ? addDay(base.activityDays, dayKey(at)) : base.activityDays,
+  }
+}
+
+/** Ghi nhận đã xem đáp án mà không tính thêm lượt làm bài. */
+export function recordSolutionView(progress, { lessonId, exerciseId, at = new Date() }) {
+  const base = normalize(progress)
+  const previous = base.exercises[exerciseId] ?? {}
+
+  return {
+    ...base,
+    exercises: {
+      ...base.exercises,
+      [exerciseId]: {
+        ...previous,
+        lessonId,
+        attempts: previous.attempts ?? 0,
+        correct: Boolean(previous.correct),
+        lastCorrect: Boolean(previous.lastCorrect),
+        viewedSolution: true,
+        lastAt: previous.lastAt ?? at.toISOString(),
+        history: previous.history ?? [],
+      },
+    },
   }
 }
 
