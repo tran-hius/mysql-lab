@@ -1,7 +1,7 @@
 # SQL Practice + Sandbox — Design
 
 **Ngày:** 2026-11-11
-**Trạng thái:** chờ duyệt
+**Trạng thái:** đã thay thế bởi `2026-11-11-sql-course-design.md` (bản khóa học đầy đủ 44 bài)
 **Liên quan:** `docs/superpowers/specs/2026-11-11-query-dashboard-design.md` (dashboard hiện có)
 
 ## 1. Mục tiêu và lý do
