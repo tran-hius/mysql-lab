@@ -1,11 +1,20 @@
-export default function SqlEditor({ value, onChange, onRun, disabled = false, placeholder }) {
+export default function SqlEditor({
+  id = 'sql-editor-input',
+  label = 'SQL của bạn',
+  hint = 'Ctrl+Enter để chạy & chấm.',
+  value,
+  onChange,
+  onRun,
+  disabled = false,
+  placeholder,
+}) {
   return (
     <div className="sql-editor">
-      <label className="field-label" htmlFor="sql-editor-input">
-        SQL của bạn
+      <label className="field-label" htmlFor={id}>
+        {label}
       </label>
       <textarea
-        id="sql-editor-input"
+        id={id}
         className="sql-textarea"
         value={value}
         placeholder={placeholder ?? 'Viết SELECT ở đây. Ctrl+Enter để chạy.'}
@@ -19,7 +28,7 @@ export default function SqlEditor({ value, onChange, onRun, disabled = false, pl
           }
         }}
       />
-      <p className="sql-editor-hint">Ctrl+Enter để chạy &amp; chấm.</p>
+      <p className="sql-editor-hint">{hint}</p>
     </div>
   )
 }

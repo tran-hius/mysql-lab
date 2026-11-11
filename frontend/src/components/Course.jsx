@@ -1,12 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getCourse, getLesson } from '../api/client.js'
-import { loadProgress, recordExercise, saveProgress } from '../lib/courseProgress.js'
+import {
+  loadProgress,
+  recordExam,
+  recordExercise,
+  saveProgress,
+} from '../lib/courseProgress.js'
+import Certificate from './Certificate.jsx'
+import CourseOverview from './CourseOverview.jsx'
+import FinalExam from './FinalExam.jsx'
 import LessonView from './LessonView.jsx'
 import Roadmap from './Roadmap.jsx'
+
+const VIEWS = [
+  { id: 'overview', label: 'Tổng quan' },
+  { id: 'exam', label: 'Bài thi' },
+  { id: 'certificate', label: 'Chứng chỉ' },
+]
 
 export default function Course({ play }) {
   const [modules, setModules] = useState(null)
   const [loadError, setLoadError] = useState(null)
+  const [view, setView] = useState('overview')
   const [activeLessonId, setActiveLessonId] = useState(null)
   const [lessonData, setLessonData] = useState(null)
   const [lessonError, setLessonError] = useState(null)
@@ -63,6 +78,11 @@ export default function Course({ play }) {
   const currentIndex = flatLessons.findIndex((lesson) => lesson.id === activeLessonId)
   const nextLesson = currentIndex >= 0 ? flatLessons[currentIndex + 1] : null
 
+  const openLesson = useCallback((lessonId) => {
+    setActiveLessonId(lessonId)
+    setView('lesson')
+  }, [])
+
   const handleGraded = useCallback(
     (exercise, submission) => {
       const lessonId = lessonData?.lesson?.id
@@ -83,6 +103,14 @@ export default function Course({ play }) {
     },
     [lessonData],
   )
+
+  const handleExamSubmitted = useCallback((result) => {
+    setProgress((current) => {
+      const next = recordExam(current, { score: result.score })
+      saveProgress(next)
+      return next
+    })
+  }, [])
 
   if (loadError) {
     return (
@@ -121,43 +149,78 @@ export default function Course({ play }) {
       <Roadmap
         modules={modules}
         progress={progress}
-        activeLessonId={activeLessonId}
-        onSelect={setActiveLessonId}
+        activeLessonId={view === 'lesson' ? activeLessonId : null}
+        onSelect={openLesson}
       />
 
       <section className="course-main">
-        {!currentLessonError && !lessonReady && (
-          <p className="notice" role="status">
-            Đang tải bài học…
-          </p>
-        )}
-
-        {currentLessonError && (
-          <div className="error-box" role="alert">
-            <h2>Không tải được bài học</h2>
-            <p>{currentLessonError.message}</p>
+        <nav className="course-nav" aria-label="Khu vực khóa học">
+          {VIEWS.map((item) => (
             <button
+              key={item.id}
               type="button"
-              className="primary-button"
-              onClick={() => setActiveLessonId((current) => current)}
+              className="course-nav-button"
+              aria-current={view === item.id ? 'page' : undefined}
+              onClick={() => setView(item.id)}
             >
-              Thử tải lại
+              {item.label}
             </button>
-          </div>
+          ))}
+          {view === 'lesson' && (
+            <span className="course-nav-current">Đang học bài</span>
+          )}
+        </nav>
+
+        {view === 'overview' && (
+          <CourseOverview
+            modules={modules}
+            progress={progress}
+            onOpenLesson={openLesson}
+            onStartExam={() => setView('exam')}
+            onOpenCertificate={() => setView('certificate')}
+          />
         )}
 
-        {lessonReady && (
-          <LessonView
-            key={lessonData.lesson.id}
-            module={lessonData.module}
-            lesson={lessonData.lesson}
-            progress={progress}
-            course={modules}
-            onGraded={handleGraded}
-            onNext={nextLesson ? () => setActiveLessonId(nextLesson.id) : null}
-            hasNext={Boolean(nextLesson)}
-            play={play}
-          />
+        {view === 'exam' && <FinalExam play={play} onSubmitted={handleExamSubmitted} />}
+
+        {view === 'certificate' && <Certificate course={modules} progress={progress} />}
+
+        {view === 'lesson' && (
+          <>
+            {!currentLessonError && !lessonReady && (
+              <p className="notice" role="status">
+                Đang tải bài học…
+              </p>
+            )}
+
+            {currentLessonError && (
+              <div className="error-box" role="alert">
+                <h2>Không tải được bài học</h2>
+                <p>{currentLessonError.message}</p>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => setActiveLessonId((current) => current)}
+                >
+                  Thử tải lại
+                </button>
+              </div>
+            )}
+
+            {lessonReady && (
+              <LessonView
+                key={lessonData.lesson.id}
+                module={lessonData.module}
+                lesson={lessonData.lesson}
+                progress={progress}
+                course={modules}
+                onGraded={handleGraded}
+                onNext={nextLesson ? () => openLesson(nextLesson.id) : null}
+                hasNext={Boolean(nextLesson)}
+                play={play}
+              />
+            )}
+          </>
         )}
       </section>
     </main>

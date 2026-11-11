@@ -75,6 +75,17 @@ export async function getExerciseSolution(id, signal) {
   return request(`/api/course/exercises/${encodeURIComponent(id)}/solution`, signal)
 }
 
+export async function getExam(signal) {
+  return request('/api/course/exam', signal)
+}
+
+export async function submitExam(items, signal) {
+  return request('/api/course/exam/submit', signal, {
+    method: 'POST',
+    body: { items },
+  })
+}
+
 export async function getHealth(signal) {
   const response = await fetch(`${baseUrl}/api/health`, {
     signal,

@@ -82,8 +82,11 @@ describe('Course', () => {
   it('render lộ trình 9 module và chuyển giữa 3 khu vực của bài', async () => {
     render(<Course play={playMock} />)
 
-    expect(await screen.findByText('Module 1')).toBeTruthy()
-    expect(screen.getByText('Module 9')).toBeTruthy()
+    expect((await screen.findAllByText('Module 1')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Module 9').length).toBeGreaterThan(0)
+    expect(screen.getByText('SQL Thực Chiến cho Data')).toBeTruthy()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Bài 1/ }))
     expect(await screen.findByText('Nội dung m1-l1.')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Làm bài' }))
@@ -96,6 +99,7 @@ describe('Course', () => {
 
   it('chấm đúng hiện Chính xác và lưu tiến độ vào localStorage', async () => {
     render(<Course play={playMock} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Bài 1/ }))
     await screen.findByText('Nội dung m1-l1.')
 
     fireEvent.click(screen.getByRole('tab', { name: 'Làm bài' }))
@@ -115,6 +119,7 @@ describe('Course', () => {
 
   it('bài tập đã pass hiện dấu hoàn thành trên lộ trình', async () => {
     render(<Course play={playMock} />)
+    fireEvent.click(await screen.findByRole('button', { name: /Bài 1/ }))
     await screen.findByText('Nội dung m1-l1.')
 
     fireEvent.click(screen.getByRole('tab', { name: 'Làm bài' }))
