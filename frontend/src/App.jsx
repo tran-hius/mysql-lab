@@ -1,80 +1,180 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getHealth } from './api/client.js'
-import Roadmap from './components/Roadmap.jsx'
-import StatusPanel from './components/StatusPanel.jsx'
-
-const STACK = [
-  { layer: 'API', name: 'Express 5, Node 24', address: 'http://localhost:4000/api' },
-  { layer: 'Dữ liệu', name: 'MySQL 8.4', address: 'mysql_lab' },
-  { layer: 'Giao diện', name: 'React 19, Vite 8', address: 'http://localhost:5173' },
-]
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { getHealth, getQueries, runQuery } from './api/client.js'
+import Sidebar from './components/Sidebar.jsx'
+import ResultTable from './components/ResultTable.jsx'
+import SqlPanel from './components/SqlPanel.jsx'
+import StatusBar from './components/StatusBar.jsx'
+import { useSound } from './hooks/useSound.js'
+import { formatDateTime, formatNumber } from './lib/format.js'
 
 export default function App() {
+  const [queries, setQueries] = useState([])
+  const [activeId, setActiveId] = useState(null)
+  const [status, setStatus] = useState('idle')
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
   const [health, setHealth] = useState(null)
-  const [state, setState] = useState('checking')
-  const [checkedAt, setCheckedAt] = useState(null)
+  const [loadError, setLoadError] = useState(null)
 
-  const runCheck = useCallback(async (signal) => {
-    try {
-      const data = await getHealth(signal)
-      setHealth(data)
-      setState(data.ok ? 'ready' : 'down')
-    } catch (error) {
-      if (error.name === 'AbortError') return
-      setHealth(null)
-      setState('down')
-    } finally {
-      setCheckedAt(new Date())
-    }
-  }, [])
+  const { enabled: soundEnabled, toggle: toggleSound, play } = useSound()
+  const controllerRef = useRef(null)
+  const runSoundRef = useRef(null)
 
   useEffect(() => {
     const controller = new AbortController()
-    // oxlint-disable-next-line react/set-state-in-effect -- fetch dữ liệu từ API là việc của effect
-    runCheck(controller.signal)
+
+    getQueries(controller.signal)
+      .then(setQueries)
+      .catch((loadFailure) => {
+        if (loadFailure.name === 'AbortError') return
+        setLoadError(loadFailure)
+      })
+
+    getHealth(controller.signal)
+      .then(setHealth)
+      .catch(() => {})
+
     return () => controller.abort()
-  }, [runCheck])
+  }, [])
+
+  useEffect(
+    () => () => {
+      controllerRef.current?.abort()
+      clearTimeout(runSoundRef.current)
+    },
+    [],
+  )
+
+  const execute = useCallback(
+    (id, { selectSound = false } = {}) => {
+      if (!id) return
+
+      controllerRef.current?.abort()
+      clearTimeout(runSoundRef.current)
+
+      const controller = new AbortController()
+      controllerRef.current = controller
+
+      setActiveId(id)
+      setStatus('loading')
+      setResult(null)
+      setError(null)
+      if (selectSound) play('select')
+      runSoundRef.current = setTimeout(() => play('run'), 70)
+
+      runQuery(id, controller.signal)
+        .then((data) => {
+          if (controller.signal.aborted) return
+          setResult(data)
+          setStatus('ready')
+          play('success')
+        })
+        .catch((queryFailure) => {
+          if (queryFailure.name === 'AbortError' || controller.signal.aborted) return
+          setError({ message: queryFailure.message, hint: queryFailure.hint })
+          setStatus('error')
+          play('error')
+        })
+    },
+    [play],
+  )
+
+  const activeQuery = queries.find((query) => query.id === activeId) ?? null
 
   return (
     <div className="app">
-      <header className="masthead">
+      <header className="topbar">
         <a className="wordmark" href="/">
           MySQL<span>Lab</span>
         </a>
-        <p className="masthead-note">Bàn thực hành cơ sở dữ liệu quan hệ</p>
-        <a className="repo" href="https://github.com/tran-hius/mysql-lab">
-          Mã nguồn trên GitHub
-        </a>
+        <StatusBar health={health} soundEnabled={soundEnabled} onToggleSound={toggleSound} />
       </header>
 
-      <main className="layout">
-        <section className="lede" aria-labelledby="lede-title">
-          <h1 id="lede-title">Thực hành MySQL trên một ứng dụng chạy thật.</h1>
-          <p className="lede-text">
-            Node.js phục vụ API, MySQL 8.4 giữ dữ liệu, React hiển thị kết quả. Trang này kiểm tra
-            cả ba lớp đang nối được với nhau trước khi bước vào phần dữ liệu.
-          </p>
+      {loadError ? (
+        <main className="fatal">
+          <h1>Không tải được danh sách truy vấn</h1>
+          <p>{loadError.message}</p>
+          {loadError.hint && <p className="hint">{loadError.hint}</p>}
+          <button type="button" className="primary-button" onClick={() => window.location.reload()}>
+            Tải lại trang
+          </button>
+        </main>
+      ) : (
+        <div className="workspace">
+          <Sidebar queries={queries} activeId={activeId} onSelect={(id) => execute(id, { selectSound: true })} />
 
-          <dl className="stack" aria-label="Các lớp của ứng dụng">
-            {STACK.map((item) => (
-              <div className="stack-row" key={item.layer}>
-                <dt>{item.layer}</dt>
-                <dd className="stack-name">{item.name}</dd>
-                <dd className="stack-address">{item.address}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+          <main className="content">
+            {!activeQuery ? (
+              <section className="empty-state">
+                <p className="eyebrow">Bảng truy vấn</p>
+                <h1>Chọn một truy vấn để chạy</h1>
+                <p>
+                  Mười câu SQL viết tay nằm trong backend. Chọn mục ở cột bên trái, kết quả sẽ được
+                  chạy thật trên MySQL và hiển thị tại đây.
+                </p>
+              </section>
+            ) : (
+              <>
+                <header className="content-head">
+                  <div>
+                    <p className="eyebrow">{activeQuery.group}</p>
+                    <h1>{activeQuery.title}</h1>
+                    <p className="description">{activeQuery.description}</p>
+                  </div>
+                  <div className="content-actions">
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() => execute(activeId)}
+                      disabled={status === 'loading'}
+                    >
+                      {status === 'loading' ? 'Đang chạy…' : 'Chạy lại'}
+                    </button>
+                    {status === 'ready' && result && (
+                      <p className="run-meta">
+                        {formatNumber(result.rowCount)} dòng · {result.durationMs} ms ·{' '}
+                        {formatDateTime(result.ranAt)}
+                      </p>
+                    )}
+                  </div>
+                </header>
 
-        <StatusPanel health={health} state={state} checkedAt={checkedAt} onRefresh={() => { setState('checking'); runCheck() }} />
-      </main>
+                {status === 'loading' && (
+                  <div className="loading" role="status" aria-busy="true">
+                    <span className="visually-hidden">Đang chạy truy vấn…</span>
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <span className="skeleton-row" key={index} aria-hidden="true" />
+                    ))}
+                  </div>
+                )}
 
-      <Roadmap />
+                {status === 'error' && error && (
+                  <div className="error-box" role="alert">
+                    <h2>Truy vấn thất bại</h2>
+                    <p>{error.message}</p>
+                    {error.hint && <p className="hint">{error.hint}</p>}
+                    <button type="button" className="primary-button" onClick={() => execute(activeId)}>
+                      Thử lại
+                    </button>
+                  </div>
+                )}
 
-      <footer className="footer">
-        <p>Chạy cục bộ trên máy bạn. Không có dữ liệu nào rời khỏi máy.</p>
-        <p className="footer-meta">Node.js + Express + mysql2, MySQL 8.4, React + Vite</p>
-      </footer>
+                {status === 'ready' && result && (
+                  <>
+                    {result.truncated && (
+                      <p className="notice">
+                        Chỉ hiện {formatNumber(result.rowCount)} trong {formatNumber(result.totalRows)} dòng.
+                      </p>
+                    )}
+                    <ResultTable columns={result.columns} rows={result.rows} />
+                    <SqlPanel sql={result.sql} />
+                  </>
+                )}
+              </>
+            )}
+          </main>
+        </div>
+      )}
     </div>
   )
 }
