@@ -18,9 +18,9 @@ test('cấu trúc khóa học hợp lệ', () => {
   const errors = validateCourse()
   assert.equal(errors.length, 0, errors.join('\n'))
 
-  assert.equal(allModules.length, 5)
+  assert.equal(allModules.length, 9)
   const lessons = allModules.flatMap((module) => module.lessons)
-  assert.equal(lessons.length, 26)
+  assert.equal(lessons.length, 44)
 
   for (const lesson of lessons) {
     assert.ok(lesson.blocks.length >= 4, `${lesson.id} phải có ít nhất 4 block`)

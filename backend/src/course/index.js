@@ -3,8 +3,24 @@ import module02 from './module-02.js';
 import module03 from './module-03.js';
 import module04 from './module-04.js';
 import module05 from './module-05.js';
+import module06 from './module-06.js';
+import module07 from './module-07.js';
+import module08 from './module-08.js';
+import module09 from './module-09.js';
 
-export const allModules = [module01, module02, module03, module04, module05];
+export { examItems, getExam, examMeta } from './exam.js';
+
+export const allModules = [
+  module01,
+  module02,
+  module03,
+  module04,
+  module05,
+  module06,
+  module07,
+  module08,
+  module09,
+];
 
 const BLOCK_TYPES = new Set(['p', 'h3', 'list', 'code', 'table', 'callout', 'steps']);
 
