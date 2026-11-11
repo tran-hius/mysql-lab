@@ -24,3 +24,6 @@ build/
 # Database dumps tạm
 *.dump
 *.sql.bak
+
+# Superpowers workspace (ledger, briefs)
+.superpowers/
