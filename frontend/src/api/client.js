@@ -9,29 +9,34 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, signal) {
+async function request(path, signal, { method = 'GET', body } = {}) {
   let response
 
   try {
     response = await fetch(`${baseUrl}${path}`, {
       signal,
-      headers: { Accept: 'application/json' },
+      method,
+      headers: {
+        Accept: 'application/json',
+        ...(body ? { 'content-type': 'application/json' } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
     })
   } catch (error) {
     if (error.name === 'AbortError') throw error
     throw new ApiError('Không gọi được API. Backend đã chạy chưa?')
   }
 
-  const body = await response.json().catch(() => null)
+  const data = await response.json().catch(() => null)
 
-  if (!response.ok || !body?.ok) {
-    throw new ApiError(body?.message ?? 'Yêu cầu thất bại', {
+  if (!response.ok || !data?.ok) {
+    throw new ApiError(data?.message ?? 'Yêu cầu thất bại', {
       status: response.status,
-      hint: body?.hint,
+      hint: data?.hint,
     })
   }
 
-  return body
+  return data
 }
 
 export async function getQueries(signal) {
@@ -41,6 +46,33 @@ export async function getQueries(signal) {
 
 export async function runQuery(id, signal) {
   return request(`/api/queries/${encodeURIComponent(id)}`, signal)
+}
+
+export async function getCourse(signal) {
+  const body = await request('/api/course', signal)
+  return body.modules
+}
+
+export async function getLesson(id, signal) {
+  return request(`/api/course/lessons/${encodeURIComponent(id)}`, signal)
+}
+
+export async function solveExercise(id, sql, signal) {
+  return request(`/api/course/exercises/${encodeURIComponent(id)}/solve`, signal, {
+    method: 'POST',
+    body: { sql },
+  })
+}
+
+export async function answerQuiz(id, choice, signal) {
+  return request(`/api/course/exercises/${encodeURIComponent(id)}/answer`, signal, {
+    method: 'POST',
+    body: { choice },
+  })
+}
+
+export async function getExerciseSolution(id, signal) {
+  return request(`/api/course/exercises/${encodeURIComponent(id)}/solution`, signal)
 }
 
 export async function getHealth(signal) {

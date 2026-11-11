@@ -13,6 +13,11 @@ vi.mock('./api/client.js', () => ({
     throw new Error('Không kết nối được MySQL.')
   }),
   getHealth: vi.fn(async () => ({ ok: false, database: { status: 'disconnected' } })),
+  getCourse: vi.fn(async () => []),
+  getLesson: vi.fn(async () => null),
+  solveExercise: vi.fn(),
+  answerQuiz: vi.fn(),
+  getExerciseSolution: vi.fn(),
 }))
 
 vi.mock('./hooks/useSound.js', () => ({
