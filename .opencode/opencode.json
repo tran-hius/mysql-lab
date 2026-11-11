@@ -1,0 +1,6 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    "D:\\mysql-lab\\node_modules\\superpowers"
+  ]
+}
