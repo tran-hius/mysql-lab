@@ -1,7 +1,7 @@
 # MySQL Lab
 
-Ứng dụng web để **thực hành MySQL**: giao diện React, API Node.js và database MySQL 8.4 chạy cùng nhau.
-Mỗi bước của dự án thêm một phần thật vào hệ thống — không dùng ORM, SQL viết tay để học được câu lệnh.
+Ứng dụng web để **thực hành MySQL**: bạn viết câu SQL trong backend, giao diện chạy và hiển thị kết quả thật từ MySQL 8.4.
+Không dùng ORM — SQL viết tay để học được câu lệnh.
 
 ## Stack
 
@@ -41,16 +41,26 @@ curl http://localhost:4000/api/health
 
 Kết quả mong đợi khi MySQL đã cấu hình đúng: `ok: true`, `database.status: "connected"`.
 
-## Lộ trình
+## Bảng truy vấn
 
-- [x] **1. Khởi tạo dự án** — Git, README, remote GitHub.
-- [x] **2. Khung backend và frontend** — Express API, React + Vite, trang trạng thái hệ thống.
-- [ ] **3. Thiết kế schema** — chọn đề tài, xác định bảng, khóa ngoại, quan hệ.
-- [ ] **4. Tạo database** — `schema.sql`, dữ liệu mẫu, tài khoản MySQL riêng cho app.
-- [ ] **5. API CRUD** — đọc và ghi bảng đầu tiên bằng `mysql2`.
-- [ ] **6. Giao diện CRUD** — bảng dữ liệu, form thêm/sửa, thông báo lỗi.
-- [ ] **7. Truy vấn nâng cao** — JOIN, tìm kiếm, phân trang, thống kê, transaction.
-- [ ] **8. Đóng gói** — script chạy một lệnh, tài liệu sử dụng.
+Giao diện là một bảng truy vấn: chọn mục ở cột trái, backend chạy câu SQL tương ứng trên MySQL và trả kết quả về bảng bên phải. Bạn viết và sửa SQL trong backend (hoặc MySQL Workbench), giao diện chỉ hiển thị.
+
+10 truy vấn chia 4 nhóm:
+
+| Nhóm | Truy vấn | Kỹ thuật |
+|---|---|---|
+| Doanh thu | Tổng quan, doanh thu theo tháng, tỷ trọng danh mục, tăng trưởng tháng | `GROUP BY`, window function, `LAG()` |
+| Sản phẩm | Top 10 sản phẩm, xếp hạng trong danh mục | `ORDER BY`, `RANK() OVER (PARTITION BY)` |
+| Khách hàng | Top khách hàng, chi tiêu trên trung bình | nhóm theo `customer_id`, subquery + `HAVING` |
+| Bài tập | Khách không bị giới thiệu, ít béo và tái chế | điều kiện `NULL`, lọc chuỗi |
+
+### Thêm truy vấn mới
+
+1. Tạo file `backend/src/queries/<ten>.sql` chứa **một câu** `SELECT` hoặc `WITH`.
+2. Thêm một dòng vào mảng `MANIFEST` trong `backend/src/queries/index.js` với `id`, `file`, `group`, `title`, `description`.
+3. Chạy `cd backend; npm test` để kiểm tra registry, rồi tải lại giao diện.
+
+API chỉ chạy truy vấn có trong registry — không nhận SQL từ trình duyệt — và trả tối đa 500 dòng (`truncated: true` nếu nhiều hơn).
 
 ## Cấu trúc
 
@@ -63,14 +73,18 @@ mysql-lab/
 │  ├─ src/
 │  │  ├─ config/         # env.js, db.js (pool + transaction)
 │  │  ├─ middleware/     # notFound, errorHandler
-│  │  ├─ routes/         # health check
+│  │  ├─ queries/        # 10 file .sql + registry index.js
+│  │  ├─ routes/         # health, queries
+│  │  ├─ services/       # sqlGuard.js, queryRunner.js
 │  │  ├─ app.js
 │  │  └─ server.js
 │  └─ .env.example
 ├─ frontend/
 │  └─ src/
 │     ├─ api/client.js
-│     ├─ components/     # StatusPanel, Roadmap
+│     ├─ components/     # Sidebar, ResultTable, SqlPanel, StatusBar
+│     ├─ hooks/          # useSound
+│     ├─ lib/            # format số, NULL, thời gian
 │     ├─ App.jsx
 │     └─ index.css
 └─ README.md
@@ -82,9 +96,15 @@ mysql-lab/
 |---|---|---|
 | GET | `/api` | Thông tin API |
 | GET | `/api/health` | Trạng thái API + kết nối MySQL (503 nếu DB lỗi) |
+| GET | `/api/queries` | Danh sách 10 truy vấn (không kèm SQL) |
+| GET | `/api/queries/:id` | Chạy truy vấn, trả `columns`, `rows`, `sql`, `durationMs` (404 id lạ, 503 khi DB lỗi) |
 
 ## Ghi chú kỹ thuật
 
 - `backend/src/config/db.js` dùng connection pool, placeholder `?` khi truyền tham số, có sẵn `withTransaction()` cho các bước sau.
 - `dotenv` đọc `backend/.env`; file này không commit.
-- Trang chủ gọi `/api/health` và hiển thị trạng thái thật của API và MySQL, không dùng dữ liệu giả.
+- `backend/src/services/sqlGuard.js` chỉ cho phép một câu `SELECT`/`WITH`; `queryRunner.js` chặn kết quả trên 500 dòng.
+- Giao diện hiển thị `NULL` thành `—`, `DECIMAL` (mysql2 trả chuỗi) được format theo kiểu số.
+- Âm thanh dùng Web Audio, bật/tắt được và lưu trong `localStorage` khoá `mysql-lab:sound`.
+- Test: `cd backend; npm test` (node --test) và `cd frontend; npm test` (Vitest).
+
