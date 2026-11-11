@@ -14,6 +14,9 @@ export const env = {
     user: process.env.DB_USER ?? 'root',
     password: process.env.DB_PASSWORD ?? '',
     database: process.env.DB_NAME ?? 'mysql_lab',
+    readerUser: process.env.DB_READER_USER ?? 'lab_reader',
+    readerPassword: process.env.DB_READER_PASSWORD ?? '',
+    readerDatabase: 'shop',
     connectionLimit: toNumber(process.env.DB_POOL_SIZE, 10),
   },
 };
