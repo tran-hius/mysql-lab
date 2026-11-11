@@ -1,7 +1,10 @@
 import module01 from './module-01.js';
 import module02 from './module-02.js';
+import module03 from './module-03.js';
+import module04 from './module-04.js';
+import module05 from './module-05.js';
 
-export const allModules = [module01, module02];
+export const allModules = [module01, module02, module03, module04, module05];
 
 const BLOCK_TYPES = new Set(['p', 'h3', 'list', 'code', 'table', 'callout', 'steps']);
 
